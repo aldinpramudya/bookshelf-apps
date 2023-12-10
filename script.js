@@ -28,6 +28,51 @@ function isButtonChecked() {
     return document.getElementById("inputBookIsComplete").checked;
 }
 
+function findBookIndex(id) {
+    for (const index in books) {
+        if (books[index].id === id) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+function undoBookFromCompleted(id) {
+    const bookTarget = findBook(id);
+
+    if (bookTarget == null)return;
+
+    bookTarget.isComplete = false;
+    document.dispatchEvent(new Event(RENDER_EVENT));
+}
+
+function removeBookFromCompleted(id) {
+    const bookTarget = findBookIndex(id);
+
+    if (bookTarget === -1)return;
+
+    books.splice(bookTarget,1);
+    document.dispatchEvent(new Event(RENDER_EVENT));
+}   
+
+function addBookToCompleted(id) {
+    const bookTarget = findBook(id);
+
+    if (findBook == null) return;
+
+    bookTarget.isComplete = true;
+    document.dispatchEvent(new Event(RENDER_EVENT));
+}
+
+function findBook(id) {
+    for (const bookItem of books) {
+        if (bookItem.id === id) {
+            return bookItem;
+        }
+    }
+    return null;
+}
+
 function addBook() {
     const bookTitle = document.getElementById('inputBookTitle').value;
     const bookAuthor = document.getElementById('inputBookAuthor').value;
@@ -61,16 +106,51 @@ function makeBook(bookObject) {
     container.append(textContainer);
     container.setAttribute('id', `book-${bookObject.id}`);
 
+    if (bookObject.isComplete) {
+        const undoButton = document.createElement('button');
+        undoButton.classList.add('green');
+        undoButton.innerText = 'Undo'
+        undoButton.addEventListener('click', function () {
+            undoBookFromCompleted(bookObject.id);
+        });
+
+        const trashButton = document.createElement('button');
+        trashButton.classList.add('red');
+        trashButton.innerText = 'Delete'
+        trashButton.addEventListener('click', function () {
+            removeBookFromCompleted(bookObject.id);
+        });
+
+        container.append(undoButton, trashButton);
+
+    } else {
+        const checkButton = document.createElement('button');
+        checkButton.classList.add('green');
+        checkButton.innerText = 'Done';
+        checkButton.addEventListener('click', function () {
+            addBookToCompleted(bookObject.id);
+        });
+
+        container.append(checkButton);
+    }
+
     return container;
 }
 
 document.addEventListener(RENDER_EVENT, function () {
     const notCompletedReadBook = document.getElementById('incompleteBookshelfList');
+    const completedReadBook = document.getElementById('completeBookshelfList');
+    completedReadBook.innerHTML = '';
     notCompletedReadBook.innerHTML = '';
 
     for (const bookItem of books) {
         const bookElement = makeBook(bookItem);
-        notCompletedReadBook.append(bookElement);
+        if (bookItem.isComplete) {
+            completedReadBook.append(bookElement);
+        } else {
+            notCompletedReadBook.append(bookElement);
+        }
     }
+
 });
 
